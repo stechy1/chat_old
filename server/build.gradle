@@ -12,6 +12,18 @@ repositories {
     mavenCentral()
 }
 
+task run (type: JavaExec, dependsOn: classes){
+    if(project.hasProperty('arg')){
+        args(arg.split(','))
+    }
+
+    main = "cz.stechy.chat.Server"
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = [
+            "-Dkey=value"
+    ]
+}
+
 dependencies {
     compile project(':share')
 
