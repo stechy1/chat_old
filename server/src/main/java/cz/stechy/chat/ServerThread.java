@@ -1,6 +1,9 @@
 package cz.stechy.chat;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
@@ -21,6 +24,9 @@ class ServerThread extends Thread implements IServerThread {
     // Threadpool s vlákny pro jednotlivé klienty
     private final Executor pool;
 
+    // Indikátor, zda-li vlákno běží, nebo ne
+    private boolean running = false;
+
     /**
      * Vytvoří novou instanci vlákna serveru
      *
@@ -38,18 +44,35 @@ class ServerThread extends Thread implements IServerThread {
 
     @Override
     public void shutdown() {
-        // TODO v budoucnu implementovat
+        running = false;
+    }
+
+    @Override
+    public synchronized void start() {
+        running = true;
+        super.start();
     }
 
     @Override
     public void run() {
-        // TODO nekonečná smyčka serverového vlákna
-        LOGGER.info("Spuštěno vlákno serveru");
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            // Každých 5 vteřin dojde k vyjímce SocketTimeoutException
+            // To proto, že metoda serverSocket.accept() je blokující
+            // a my bychom neměli šanci činnost vlákna ukončit
+            serverSocket.setSoTimeout(5000);
+            LOGGER.info(String.format("Server naslouchá na portu: %d.", serverSocket.getLocalPort()));
+            // Nové vlákno serveru
+            while (running) {
+                try {
+                    final Socket socket = serverSocket.accept();
+                    LOGGER.info("Server přijal nové spojení.");
+
+                    // TODO zpracovat nové spojení
+                } catch (SocketTimeoutException ignored) {}
+            }
+
+        } catch (IOException e) {
+            LOGGER.error("Chyba v server socketu.", e);
         }
-        LOGGER.info("Vlákno serveru bylo ukončeno");
     }
 }
