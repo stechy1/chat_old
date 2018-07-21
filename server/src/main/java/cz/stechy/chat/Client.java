@@ -21,7 +21,7 @@ class Client implements Runnable {
 
     private final Socket socket;
     private final InputStream inputStream;
-    private final BufferedOutputStream writer;
+    final BufferedOutputStream writer;
 
     private ConnectionClosedListener connectionClosedListener;
 

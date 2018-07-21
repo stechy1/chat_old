@@ -10,5 +10,6 @@ public class ServerModule extends AbstractModule {
     public void configure() {
         bind(IParameterFactory.class).to(ParameterFactory.class);
         bind(IServerThreadFactory.class).to(ServerThreadFactory.class);
+        bind(IClientDispatcherFactory.class).to(ClientDispatcherFactory.class);
     }
 }

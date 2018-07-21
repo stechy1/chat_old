@@ -27,6 +27,8 @@ class ServerThread extends Thread implements IServerThread {
     private final int maxClients;
     // Threadpool s vlákny pro jednotlivé klienty
     private final ExecutorService pool;
+    // Client dispatcher
+    private final IClientDispatcher clientDispatcher;
 
     // Indikátor, zda-li vlákno běží, nebo ne
     private boolean running = false;
@@ -36,13 +38,14 @@ class ServerThread extends Thread implements IServerThread {
      *
      * @param port Číslo portu
      * @param maxClients Maximální počet připojených klientů
-     * @param waitingQueueSize Velikost čekací fronty
+     * @param clientDispatcher {@link IClientDispatcher} starající se o klienty v čekací frontě
      * @throws IOException Pokud se nepodaří vlákno vytvořit
      */
-    ServerThread(int port, int maxClients, int waitingQueueSize) throws IOException {
+    ServerThread(int port, int maxClients, IClientDispatcher clientDispatcher) throws IOException {
         super("ServerThread");
         this.port = port;
         this.maxClients = maxClients;
+        this.clientDispatcher = clientDispatcher;
         pool = Executors.newFixedThreadPool(maxClients);
     }
 
@@ -51,12 +54,20 @@ class ServerThread extends Thread implements IServerThread {
             clients.add(client);
             client.setConnectionClosedListener(() -> {
                 clients.remove(client);
-                // TODO pokud je ve frontě klient, přidej ho na seznam komunikujících klientů
+                LOGGER.info("Počet připojených klientů: {}.", clients.size());
+                if (clientDispatcher.hasClientInQueue()) {
+                    LOGGER.info("V čekací listině se našel klient, který by rád komunikoval.");
+                    this.insertClientToListOrQueue(clientDispatcher.getClientFromQueue());
+                }
             });
             pool.submit(client);
         } else {
-            // TODO vložit klienta do fronty
-            client.close();
+            if (clientDispatcher.addClientToQueue(client)) {
+                LOGGER.info("Přidávám klienta na čekací listinu.");
+            } else {
+                LOGGER.warn("Odpojuji klienta od serveru. Je připojeno příliš mnoho uživatelů.");
+                client.close();
+            }
         }
     }
 
@@ -73,6 +84,7 @@ class ServerThread extends Thread implements IServerThread {
 
     @Override
     public void run() {
+        clientDispatcher.start();
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             // Každých 5 vteřin dojde k vyjímce SocketTimeoutException
             // To proto, že metoda serverSocket.accept() je blokující
@@ -95,5 +107,11 @@ class ServerThread extends Thread implements IServerThread {
         } catch (IOException e) {
             LOGGER.error("Chyba v server socketu.", e);
         }
+
+        LOGGER.info("Ukončuji client dispatcher.");
+        clientDispatcher.shutdown();
+        try {
+            clientDispatcher.join();
+        } catch (InterruptedException ignored) {}
     }
 }

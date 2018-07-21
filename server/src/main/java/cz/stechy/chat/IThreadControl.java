@@ -15,4 +15,6 @@ public interface IThreadControl {
      */
     void shutdown();
 
+    void join() throws InterruptedException;
+
 }
