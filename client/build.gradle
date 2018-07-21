@@ -1,10 +1,12 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group 'cz.stechy'
 version '1.0-SNAPSHOT'
 
+mainClassName = 'cz.stechy.chat.SimpleClient'
 sourceCompatibility = 1.8
 
 repositories {
