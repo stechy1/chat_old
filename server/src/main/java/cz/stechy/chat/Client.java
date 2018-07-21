@@ -21,12 +21,14 @@ class Client implements Runnable {
 
     private final Socket socket;
     private final InputStream inputStream;
+    private final IWriterThread writerThread;
     final BufferedOutputStream writer;
 
     private ConnectionClosedListener connectionClosedListener;
 
-    Client(Socket socket) throws IOException {
+    Client(Socket socket, IWriterThread writerThread) throws IOException {
         this.socket = socket;
+        this.writerThread = writerThread;
         inputStream = socket.getInputStream();
         writer = new BufferedOutputStream(socket.getOutputStream());
         LOGGER.info("Byl vytvořen nový klient.");
@@ -45,6 +47,15 @@ class Client implements Runnable {
         }
     }
 
+    /**
+     * Odešle klientovi zprávu
+     *
+     * @param message Zpráva, která se má odeslat
+     */
+    public void sendMessage(String message) {
+        writerThread.sendMessage(writer, message);
+    }
+
     @Override
     public void run() {
         LOGGER.info("Spouštím nekonečnou smyčku pro komunikaci s klientem.");
@@ -53,8 +64,9 @@ class Client implements Runnable {
             String received;
             while ((received = reader.readLine()) != null) {
                 LOGGER.info(String.format("Bylo přijato: '%s'", received));
-                writer.write((received + "\n").getBytes());
-                writer.flush();
+                sendMessage(received);
+//                writer.write((received + "\n").getBytes());
+//                writer.flush();
             }
         } catch (EOFException |SocketException e) {
             LOGGER.info("Klient ukončil spojení.");

@@ -21,6 +21,7 @@ class ServerThread extends Thread implements IServerThread {
 
     // Seznam klientů, se kterými server aktivně komunikuje
     private final List<Client> clients = new ArrayList<>();
+    private final IWriterThread writerThread = new WriterThread();
     // Číslo portu
     private final int port;
     // Maximální počet klientů
@@ -85,6 +86,7 @@ class ServerThread extends Thread implements IServerThread {
     @Override
     public void run() {
         clientDispatcher.start();
+        writerThread.start();
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             // Každých 5 vteřin dojde k vyjímce SocketTimeoutException
             // To proto, že metoda serverSocket.accept() je blokující
@@ -98,7 +100,7 @@ class ServerThread extends Thread implements IServerThread {
                     final Socket socket = serverSocket.accept();
                     LOGGER.info("Server přijal nové spojení.");
 
-                    final Client client = new Client(socket);
+                    final Client client = new Client(socket, writerThread);
                     insertClientToListOrQueue(client);
                 } catch (SocketTimeoutException ignored) {
                 }
@@ -112,6 +114,12 @@ class ServerThread extends Thread implements IServerThread {
         clientDispatcher.shutdown();
         try {
             clientDispatcher.join();
+        } catch (InterruptedException ignored) {}
+
+        LOGGER.info("Ukončuji writer thread.");
+        writerThread.shutdown();
+        try {
+            writerThread.join();
         } catch (InterruptedException ignored) {}
     }
 }
