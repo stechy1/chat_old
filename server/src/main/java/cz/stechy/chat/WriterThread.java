@@ -1,7 +1,8 @@
 package cz.stechy.chat;
 
-import java.io.BufferedOutputStream;
+import cz.stechy.chat.net.message.IMessage;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
@@ -23,7 +24,7 @@ public class WriterThread extends Thread implements IWriterThread {
     }
 
     @Override
-    public void sendMessage(BufferedOutputStream writer, String message) {
+    public void sendMessage(ObjectOutputStream writer, IMessage message) {
         messageQueue.add(new QueueTuple(writer, message));
         if (!working) {
             working = true;
@@ -50,7 +51,7 @@ public class WriterThread extends Thread implements IWriterThread {
                 assert entry != null;
                 LOGGER.info(String.format("Odesílám zprávu: '%s'", entry.message));
                 try {
-                    entry.writer.write((entry.message + "\n").getBytes());
+                    entry.writer.writeObject(entry.message);
                     entry.writer.flush();
                     LOGGER.info("Zpráva byla úspěšně odeslána.");
                 } catch (IOException e) {
@@ -70,10 +71,10 @@ public class WriterThread extends Thread implements IWriterThread {
     }
 
     private static final class QueueTuple {
-        final String message;
-        final BufferedOutputStream writer;
+        final IMessage message;
+        final ObjectOutputStream writer;
 
-        private QueueTuple(BufferedOutputStream writer, String message) {
+        private QueueTuple(ObjectOutputStream writer, IMessage message) {
             this.message = message;
             this.writer = writer;
         }

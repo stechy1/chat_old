@@ -1,11 +1,11 @@
 package cz.stechy.chat;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
+import cz.stechy.chat.net.message.IMessage;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ class Client implements Runnable {
     private final Socket socket;
     private final InputStream inputStream;
     private final IWriterThread writerThread;
-    final BufferedOutputStream writer;
+    final ObjectOutputStream writer;
 
     private ConnectionClosedListener connectionClosedListener;
 
@@ -30,7 +30,7 @@ class Client implements Runnable {
         this.socket = socket;
         this.writerThread = writerThread;
         inputStream = socket.getInputStream();
-        writer = new BufferedOutputStream(socket.getOutputStream());
+        writer = new ObjectOutputStream(socket.getOutputStream());
         LOGGER.info("Byl vytvořen nový klient.");
     }
 
@@ -52,17 +52,17 @@ class Client implements Runnable {
      *
      * @param message Zpráva, která se má odeslat
      */
-    public void sendMessage(String message) {
+    public void sendMessage(IMessage message) {
         writerThread.sendMessage(writer, message);
     }
 
     @Override
     public void run() {
         LOGGER.info("Spouštím nekonečnou smyčku pro komunikaci s klientem.");
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+        try (ObjectInputStream reader = new ObjectInputStream(inputStream)) {
             LOGGER.info("InputStream byl úspěšně vytvořen.");
-            String received;
-            while ((received = reader.readLine()) != null) {
+            IMessage received;
+            while ((received = (IMessage) reader.readObject()) != null) {
                 LOGGER.info(String.format("Bylo přijato: '%s'", received));
                 sendMessage(received);
             }
@@ -70,6 +70,9 @@ class Client implements Runnable {
             LOGGER.info("Klient ukončil spojení.");
         } catch (IOException e) {
             LOGGER.warn("Nastala neočekávaná vyjímka.", e);
+        } catch (ClassNotFoundException e) {
+            // Nikdy by nemělo nastat
+            LOGGER.error("Nebyla nalezena třída.", e);
         } catch (Exception e) {
             LOGGER.error("Neznámá chyba.", e);
         } finally {

@@ -1,9 +1,9 @@
 package cz.stechy.chat;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import cz.stechy.chat.net.message.HelloMessage;
+import cz.stechy.chat.net.message.IMessage;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +18,13 @@ public class SimpleClient {
         Socket socket = new Socket("localhost", 15378);
         LOGGER.info("Bylo navázané spojení.");
         Thread.sleep(1000);
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        ObjectOutputStream writer = new ObjectOutputStream(socket.getOutputStream());
         LOGGER.info("Odesílám zprávu.");
-        writer.write("Hello from client.\n");
+        writer.writeObject(new HelloMessage("Hello from client."));
         writer.flush();
         LOGGER.info("Čtu zprávu.");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        LOGGER.info(reader.readLine());
+        ObjectInputStream reader = new ObjectInputStream(socket.getInputStream());
+        LOGGER.info(((IMessage) reader.readObject()).getData().toString());
         LOGGER.info("Ukončuji spojení.");
         socket.close();
         LOGGER.info("Spojení bylo ukončeno. Klient končí.");
