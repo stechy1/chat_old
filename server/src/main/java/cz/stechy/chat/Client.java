@@ -60,7 +60,7 @@ class Client implements Runnable {
     public void run() {
         LOGGER.info("Spouštím nekonečnou smyčku pro komunikaci s klientem.");
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            LOGGER.info("ObjectInputStream byl úspěšně vytvořen.");
+            LOGGER.info("InputStream byl úspěšně vytvořen.");
             String received;
             while ((received = reader.readLine()) != null) {
                 LOGGER.info(String.format("Bylo přijato: '%s'", received));
