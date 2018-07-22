@@ -65,8 +65,6 @@ class Client implements Runnable {
             while ((received = reader.readLine()) != null) {
                 LOGGER.info(String.format("Bylo přijato: '%s'", received));
                 sendMessage(received);
-//                writer.write((received + "\n").getBytes());
-//                writer.flush();
             }
         } catch (EOFException |SocketException e) {
             LOGGER.info("Klient ukončil spojení.");
