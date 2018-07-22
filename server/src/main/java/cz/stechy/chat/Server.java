@@ -45,8 +45,8 @@ public class Server {
         LOGGER.info("Server byl ukončen.");
     }
 
-    public static void main(String[] args) throws Exception{
-        final Injector injector = Guice.createInjector(new ServerModule());
+    public static void main(String[] args) throws Exception {
+        final Injector injector = Guice.createInjector(new ServerModule(), new PluginModule());
         final Server server = injector.getInstance(Server.class);
         server.run(args);
     }
