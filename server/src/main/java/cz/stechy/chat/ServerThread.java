@@ -1,11 +1,13 @@
 package cz.stechy.chat;
 
+import cz.stechy.chat.plugins.IPlugin;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
@@ -42,7 +44,7 @@ class ServerThread extends Thread implements IServerThread {
      * @param clientDispatcher {@link IClientDispatcher} starající se o klienty v čekací frontě
      * @throws IOException Pokud se nepodaří vlákno vytvořit
      */
-    ServerThread(int port, int maxClients, IClientDispatcher clientDispatcher) throws IOException {
+    ServerThread(int port, int maxClients, IClientDispatcher clientDispatcher, Set<IPlugin> plugins) throws IOException {
         super("ServerThread");
         this.port = port;
         this.maxClients = maxClients;
