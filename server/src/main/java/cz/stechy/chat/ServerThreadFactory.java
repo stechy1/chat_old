@@ -4,9 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import cz.stechy.chat.cmd.CmdParser;
 import cz.stechy.chat.cmd.IParameterProvider;
-import cz.stechy.chat.plugins.IPlugin;
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * Továrna serverového vlákna
@@ -22,12 +20,10 @@ class ServerThreadFactory implements IServerThreadFactory {
     private static final int DEFAULT_WAITING_QUEUE_SIZE = 1;
 
     private final IClientDispatcherFactory clientDispatcherFactory;
-    private final Set<IPlugin> plugins;
 
     @Inject
-    ServerThreadFactory(IClientDispatcherFactory clientDispatcherFactory, Set<IPlugin> plugins) {
+    ServerThreadFactory(IClientDispatcherFactory clientDispatcherFactory) {
         this.clientDispatcherFactory = clientDispatcherFactory;
-        this.plugins = plugins;
     }
 
     @Override
@@ -36,6 +32,6 @@ class ServerThreadFactory implements IServerThreadFactory {
         final int maxClients = parameters.getInteger(CmdParser.CLIENTS, DEFAULT_MAX_CLIENTS);
         final int waitingQueueSize = parameters.getInteger(CmdParser.MAX_WAITING_QUEUE, DEFAULT_WAITING_QUEUE_SIZE);
 
-        return new ServerThread(port, maxClients, clientDispatcherFactory.getClientDispatcher(waitingQueueSize), plugins);
+        return new ServerThread(port, maxClients, clientDispatcherFactory.getClientDispatcher(waitingQueueSize));
     }
 }
