@@ -1,5 +1,7 @@
 package cz.stechy.chat.plugins;
 
+import cz.stechy.chat.plugins.hello.HelloPlugin;
+
 /**
  * Výčet základních pluginů dostupných na serveru
  */

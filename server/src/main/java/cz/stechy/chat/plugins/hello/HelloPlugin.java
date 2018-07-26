@@ -1,5 +1,6 @@
-package cz.stechy.chat.plugins;
+package cz.stechy.chat.plugins.hello;
 
+import cz.stechy.chat.plugins.IPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
