@@ -1,5 +1,6 @@
 package cz.stechy.chat;
 
+import cz.stechy.chat.net.message.IMessage;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -100,7 +101,7 @@ class ServerThread extends Thread implements IServerThread {
                     final Socket socket = serverSocket.accept();
                     LOGGER.info("Server přijal nové spojení.");
 
-                    final Client client = new Client(socket, writerThread);
+                    final Client client = new Client(socket, writerThread, this::receiveListener);
                     insertClientToListOrQueue(client);
                 } catch (SocketTimeoutException ignored) {
                 }
@@ -121,5 +122,15 @@ class ServerThread extends Thread implements IServerThread {
         try {
             writerThread.join();
         } catch (InterruptedException ignored) {}
+    }
+
+    private void receiveListener(IMessage message, Client client) {
+        switch (message.getType()) {
+            case HELLO:
+                client.sendMessage(message);
+                break;
+            default:
+                System.out.println("Byla přijata zpráva neznámého typu: " + message.getType());
+        }
     }
 }
