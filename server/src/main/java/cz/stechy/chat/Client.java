@@ -22,15 +22,18 @@ class Client implements Runnable {
     private final Socket socket;
     private final InputStream inputStream;
     private final IWriterThread writerThread;
+    private final IMessageReceiveListener messageReceiveListener;
     final ObjectOutputStream writer;
 
     private ConnectionClosedListener connectionClosedListener;
 
-    Client(Socket socket, IWriterThread writerThread) throws IOException {
+    Client(Socket socket, IWriterThread writerThread,
+        IMessageReceiveListener messageReceiveListener) throws IOException {
         this.socket = socket;
         this.writerThread = writerThread;
         inputStream = socket.getInputStream();
         writer = new ObjectOutputStream(socket.getOutputStream());
+        this.messageReceiveListener = messageReceiveListener;
         LOGGER.info("Byl vytvořen nový klient.");
     }
 
@@ -65,6 +68,7 @@ class Client implements Runnable {
             while ((received = (IMessage) reader.readObject()) != null) {
                 LOGGER.info(String.format("Bylo přijato: '%s'", received));
                 sendMessage(received);
+                messageReceiveListener.onMessageReceived(received, this);
             }
         } catch (EOFException |SocketException e) {
             LOGGER.info("Klient ukončil spojení.");
@@ -103,5 +107,20 @@ class Client implements Runnable {
          * Metoda se zavolá v případě, že se ukončí spojení s klientem
          */
         void onConnectionClosed();
+    }
+
+    /**
+     * Rozhraní obsahující metodu, která se zavolá vždy, když klient pošle zprávu
+     */
+    @FunctionalInterface
+    interface IMessageReceiveListener {
+
+        /**
+         * Metoda se zavolá pokaždé, když server obdrží zprávu od klienta
+         *
+         * @param message {@link IMessage} Zpráva
+         * @param client {@link Client} Klient, který zprávu poslal
+         */
+        void onMessageReceived(IMessage message, Client client);
     }
 }
